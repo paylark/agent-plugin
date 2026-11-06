@@ -17,11 +17,11 @@
 ## 安裝：Claude Code
 
 ```bash
-claude plugin marketplace add <owner>/<repo>
+claude plugin marketplace add paylark/agent-plugin
 claude plugin install paylark@paylark
 ```
 
-或在 Claude Code 裡執行 `/plugin marketplace add <owner>/<repo>`，再用 `/plugin install paylark@paylark`。安裝時會詢問：
+或在 Claude Code 裡執行 `/plugin marketplace add paylark/agent-plugin`，再用 `/plugin install paylark@paylark`。安裝時會詢問：
 
 - **API key**：後台「開發者 → API 金鑰」的 `sk_test_...`。金鑰存在系統鑰匙圈，不會寫進設定檔。
 - **API base URL**：Paylark 伺服器位址，例如 `https://app.example.com`，本機開發用 `http://localhost:8080`。
@@ -60,4 +60,4 @@ MIT，見 [LICENSE](LICENSE)。
 
 ---
 
-*English: Claude Code / Cursor plugin for Paylark. Install with `claude plugin marketplace add <owner>/<repo>` then `claude plugin install paylark@paylark`. It bundles the Paylark remote MCP server and five skills. Use test keys only.*
+*English: Claude Code / Cursor plugin for Paylark. Install with `claude plugin marketplace add paylark/agent-plugin` then `claude plugin install paylark@paylark`. It bundles the Paylark remote MCP server and five skills. Use test keys only.*
