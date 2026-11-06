@@ -1,0 +1,12 @@
+{
+  "name": "paylark",
+  "version": "0.1.0",
+  "author": {
+    "name": "Paylark"
+  },
+  "license": "MIT",
+  "description": "Paylark payments for Cursor: the Paylark MCP server plus skills for adding checkout, subscriptions, license keys and signed webhooks to your app.",
+  "keywords": ["paylark", "payments", "checkout", "subscriptions", "license-keys", "webhooks", "cursor", "mcp", "skills"],
+  "skills": "skills/",
+  "mcpServers": ".cursor-plugin/mcp.json"
+}

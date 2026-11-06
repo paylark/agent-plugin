@@ -1,0 +1,22 @@
+{
+  "name": "paylark",
+  "owner": {
+    "name": "Paylark"
+  },
+  "metadata": {
+    "description": "Paylark plugin marketplace for Claude Code.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "paylark",
+      "source": "./",
+      "description": "Paylark payments for Claude Code: the Paylark MCP server plus skills for adding checkout, subscriptions, license keys and signed webhooks to your app.",
+      "author": {
+        "name": "Paylark"
+      },
+      "license": "MIT",
+      "keywords": ["paylark", "payments", "checkout", "subscriptions", "license-keys", "webhooks", "mcp", "skills"]
+    }
+  ]
+}
