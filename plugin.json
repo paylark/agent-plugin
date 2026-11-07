@@ -1,0 +1,13 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "paylark",
+  "version": "0.2.0",
+  "author": {
+    "name": "Paylark"
+  },
+  "homepage": "https://github.com/paylark/agent-plugin",
+  "repository": "https://github.com/paylark/agent-plugin",
+  "license": "MIT",
+  "description": "Paylark payments for AI coding agents: skills for adding checkout, subscriptions, license keys and signed webhooks to your app, plus the Paylark MCP server.",
+  "keywords": ["paylark", "payments", "checkout", "subscriptions", "license-keys", "webhooks", "agent-plugins", "mcp", "skills"]
+}

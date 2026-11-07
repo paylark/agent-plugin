@@ -1,63 +1,158 @@
-# Paylark 外掛（Claude Code／Cursor）
+# Paylark agent plugin
 
-把 Paylark 收款平台接進 AI 編碼助理：一個遠端 MCP 伺服器（查詢與建立商品、結帳、訂閱、授權金鑰、Webhook 事件），加上五個技能，教助理如何在你的應用程式裡串接結帳、驗證 Webhook 簽章、管理授權金鑰與使用測試模式。
+Paylark for AI coding agents: the Paylark MCP server plus five skills that teach your agent to add hosted checkout, subscriptions, license keys and signed webhooks to your app, and to test it all in test mode.
 
-> Paylark 目前是原型，正式模式尚未串接收單機構。
+> Paylark is a prototype. Live mode is not yet connected to an acquirer.
 
-## 內容
+## Install
 
-| 路徑 | 說明 |
-|---|---|
-| `.claude-plugin/marketplace.json` | Claude Code 外掛市集定義 |
-| `.claude-plugin/plugin.json` | 外掛資訊與使用者設定（API 金鑰、API 位址） |
-| `.mcp.json` | 遠端 MCP 伺服器（Streamable HTTP，`<api_base>/mcp`） |
-| `.cursor-plugin/` | Cursor 外掛定義與 MCP 設定 |
-| `skills/` | `paylark-integration`、`paylark-webhooks`、`paylark-license-keys`、`paylark-mcp-usage`、`paylark-testing` |
+| Client | Skills | MCP | How |
+|---|---|---|---|
+| Claude Code | ✅ | ✅ | [Marketplace](#claude-code) |
+| Codex CLI | ✅ | one command | [Marketplace](#codex-cli) |
+| GitHub Copilot CLI | ✅ | one command | [Marketplace](#github-copilot-cli) |
+| Gemini CLI | ✅ | ✅ | [Extension](#gemini-cli) |
+| Cursor | ✅ | ✅ | [Plugin](#cursor) |
+| Windsurf, Cline, OpenCode, Zed, Amp, … | ✅ | config | [`npx skills` + MCP URL](#other-agents) |
 
-## 安裝：Claude Code
+The MCP server runs on your Paylark server at `<api_base>/mcp` (for example `https://app.example.com/mcp`, or `http://localhost:8080/mcp` in local development) and signs in with OAuth. There is no API key to paste: the first connection opens a Paylark consent page where you choose test or live mode and whether the agent may make changes. Connected agents are listed under Dashboard → Developers → API keys → Connected AI apps, where you can disconnect them.
 
-```bash
+Codex and Copilot CLI cannot read the server address from a setting, so their plugins install the skills and you add the MCP server with one command. Clients without OAuth can use an [API key](#api-key-fallback) instead.
+
+### Claude Code
+
+```sh
 claude plugin marketplace add paylark/agent-plugin
 claude plugin install paylark@paylark
 ```
 
-或在 Claude Code 裡執行 `/plugin marketplace add paylark/agent-plugin`，再用 `/plugin install paylark@paylark`。安裝時會詢問：
+Or inside Claude Code: `/plugin marketplace add paylark/agent-plugin`, then `/plugin install paylark@paylark`. Claude Code asks for the **API base URL**. Then run `/mcp`, pick `paylark` and sign in.
 
-- **API key**：後台「開發者 → API 金鑰」的 `sk_test_...`。金鑰存在系統鑰匙圈，不會寫進設定檔。
-- **API base URL**：Paylark 伺服器位址，例如 `https://app.example.com`，本機開發用 `http://localhost:8080`。
+### Codex CLI
 
-## 安裝：Cursor
+```sh
+codex plugin marketplace add paylark/agent-plugin
+codex plugin add paylark@paylark
+codex mcp add paylark --url https://app.example.com/mcp
+codex mcp login paylark
+```
 
-設定環境變數 `PAYLARK_API_BASE` 與 `PAYLARK_API_KEY`，再從本 repo 安裝外掛（`.cursor-plugin/plugin.json`）。
+You can also run `codex`, type `/plugins` and install **Paylark** from there.
 
-## 只用 MCP（其他用戶端）
+### GitHub Copilot CLI
 
-任何支援 Streamable HTTP 的 MCP 用戶端都可直接連線：
+```sh
+copilot plugin marketplace add paylark/agent-plugin
+copilot plugin install paylark@paylark
+copilot mcp add --transport http paylark https://app.example.com/mcp
+```
 
-```bash
+Copilot CLI opens the Paylark sign-in page the first time it uses the server.
+
+### Gemini CLI
+
+```sh
+gemini extensions install https://github.com/paylark/agent-plugin
+```
+
+Gemini CLI asks for the API base URL (change it later with `gemini extensions config paylark`). Then run `/mcp auth paylark` inside Gemini CLI.
+
+### Cursor
+
+```sh
+git clone https://github.com/paylark/agent-plugin.git ~/.cursor/plugins/local/paylark
+```
+
+Set `PAYLARK_API_BASE` in your environment and restart Cursor; Cursor asks you to sign in the first time it connects. MCP only: add `{ "mcpServers": { "paylark": { "url": "https://app.example.com/mcp" } } }` to `.cursor/mcp.json`.
+
+### Other agents
+
+Any agent that reads `SKILL.md` folders can take the skills with [`skills`](https://github.com/vercel-labs/skills):
+
+```sh
+npx skills add paylark/agent-plugin          # add -a <agent> for one client, -g for global
+```
+
+and any MCP client that speaks Streamable HTTP and OAuth can use the server URL:
+
+```sh
+npx add-mcp https://app.example.com/mcp
+```
+
+Clients that read the [Agent Plugins](https://agent-plugins.org) manifest (`plugin.json`) can load a clone of this repository directly for the skills.
+
+### API key fallback
+
+Clients without OAuth can send a Paylark secret key from Dashboard → Developers → API keys as a bearer token. Use a **test** key (`sk_test_...`); a live key only gets read-only tools.
+
+```sh
 claude mcp add --transport http paylark https://app.example.com/mcp \
   --header "Authorization: Bearer sk_test_..."
+codex mcp add paylark --url https://app.example.com/mcp --bearer-token-env-var PAYLARK_API_KEY
 ```
 
-## 安全
+```json
+{ "mcpServers": { "paylark": { "type": "http", "url": "https://app.example.com/mcp",
+  "headers": { "Authorization": "Bearer sk_test_..." } } } }
+```
 
-- 請使用**測試金鑰**。正式金鑰只能使用唯讀工具（伺服器端另設 `MCP_ALLOW_LIVE_WRITES` 才開放寫入）。
-- 不要把金鑰提交到 repo；Cursor 設定只引用環境變數。
-- MCP 伺服器只接受 `ALLOWED_ORIGINS` 列出的瀏覽器來源。
+## What you get
 
-## 開發
+**MCP server** `paylark`: read the account mode and balance, products, payments, customers, subscriptions, events and webhook deliveries; validate license keys; search the developer docs; create products, checkout sessions, discounts, customer portal links and webhook endpoints; refund payments and cancel subscriptions (the agent confirms first); advance test subscriptions to simulate renewals.
 
-```bash
-node scripts/check.mjs            # 檢查各 manifest 版本與名稱一致、技能格式正確
+**Skills**
+
+| Skill | Use it for |
+|---|---|
+| `paylark-integration` | Hosted checkout, payment links, one-time products and subscriptions, fulfilment |
+| `paylark-webhooks` | Verifying `Paylark-Signature`, idempotent event handling, debugging deliveries |
+| `paylark-license-keys` | Selling apps and CLIs with license keys and device activation |
+| `paylark-mcp-usage` | When and how to call the MCP tools safely |
+| `paylark-testing` | Test cards, simulated renewals and failures, local webhook testing |
+
+Try: *"Add a Paylark checkout for my Pro plan to this app"* or *"Write a Paylark webhook handler that verifies the signature"*.
+
+## Security
+
+- OAuth sign-in starts in test mode and read only unless you allow changes on the consent page. Live connections only get read-only tools unless live writes are enabled for your account.
+- This repository never holds a key: the bundled MCP configs carry only the server URL, and `check.mjs` fails if one adds a header.
+- If you use the API key fallback, use a **test key** and never commit it.
+- The MCP server only accepts browser origins listed in `ALLOWED_ORIGINS`.
+
+## Privacy
+
+The plugin itself collects nothing. Its skills are local files, and the MCP server it connects to is the Paylark server you configure, which handles your data under that server's privacy policy.
+
+## Repository layout
+
+| Path | For |
+|---|---|
+| `skills/` | The skills, shared by every client |
+| `.claude-plugin/` | Claude Code plugin and marketplace (also read by Copilot CLI) |
+| `.mcp.json` | Claude Code MCP server, using the plugin's `api_base` setting |
+| `.codex-plugin/`, `.agents/plugins/` | Codex plugin and marketplace |
+| `.cursor-plugin/` | Cursor plugin and MCP config |
+| `gemini-extension.json` | Gemini CLI extension |
+| `plugin.json` | Agent Plugins manifest |
+| `assets/` | Icon |
+
+## Development
+
+```sh
+node scripts/check.mjs                                  # every manifest agrees on name, version and MCP server
 npx -y @anthropic-ai/claude-code plugin validate .
+npx -y @google/gemini-cli extensions validate .
+npx -y skills add . --list
 ```
 
-發版時同步修改 `.claude-plugin/plugin.json`、`.claude-plugin/marketplace.json`、`.cursor-plugin/plugin.json` 的 `version`。
+CI runs all four. To release, bump `version` in `.claude-plugin/plugin.json` and the other manifests; `check.mjs` fails until they all match.
 
-## 授權
+## License
 
-MIT，見 [LICENSE](LICENSE)。
+MIT, see [LICENSE](LICENSE).
 
 ---
 
-*English: Claude Code / Cursor plugin for Paylark. Install with `claude plugin marketplace add paylark/agent-plugin` then `claude plugin install paylark@paylark`. It bundles the Paylark remote MCP server and five skills. Use test keys only.*
+### 中文摘要
+
+Paylark 的 AI 編程助手外掛：接上 Paylark MCP 伺服器（`<api_base>/mcp`，OAuth 登入，不需貼 API 金鑰；不支援 OAuth 的用戶端可改用測試金鑰），並附 5 個技能，教助手在你的專案裡串接結帳、訂閱、授權金鑰與 Webhook 簽章驗證。支援 Claude Code、Codex、Copilot CLI、Gemini CLI、Cursor，其他工具可用 `npx skills add paylark/agent-plugin` 加上 MCP 網址。

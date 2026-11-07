@@ -1,0 +1,17 @@
+{
+  "name": "paylark",
+  "version": "0.2.0",
+  "description": "Paylark payments for Gemini CLI: the Paylark MCP server plus skills for adding checkout, subscriptions, license keys and signed webhooks to your app.",
+  "settings": [
+    {
+      "name": "Paylark API base URL",
+      "description": "Where your Paylark server runs, without a trailing slash, e.g. https://app.example.com or http://localhost:8080.",
+      "envVar": "PAYLARK_API_BASE"
+    }
+  ],
+  "mcpServers": {
+    "paylark": {
+      "httpUrl": "${PAYLARK_API_BASE}/mcp"
+    }
+  }
+}

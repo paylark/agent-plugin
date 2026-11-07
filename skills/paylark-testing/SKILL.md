@@ -1,6 +1,6 @@
 ---
 name: paylark-testing
-description: Test an Paylark integration end to end in test mode - test card numbers for success, declines and disputes, simulating subscription renewals and failures, and testing webhooks locally. Use when writing tests or manually checking checkout, renewal and refund flows.
+description: Test a Paylark integration end to end in test mode - test card numbers for success, declines and disputes, simulating subscription renewals and failures, and testing webhooks locally. Use when writing tests or manually checking checkout, renewal and refund flows.
 ---
 
 # Testing with Paylark

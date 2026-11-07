@@ -1,10 +1,7 @@
 {
   "mcpServers": {
     "paylark": {
-      "url": "${env:PAYLARK_API_BASE}/mcp",
-      "headers": {
-        "Authorization": "Bearer ${env:PAYLARK_API_KEY}"
-      }
+      "url": "${env:PAYLARK_API_BASE}/mcp"
     }
   }
 }

@@ -5,10 +5,15 @@ description: How and when to use the Paylark MCP server tools safely - reading p
 
 # Using the Paylark MCP server
 
-This plugin registers one remote MCP server, `paylark`, at `<api_base>/mcp`, authenticated with the API key the user entered when enabling the plugin. Every tool call is one `/v1` API request with that key, so it sees exactly the same data and limits as the key, and it shows up in the dashboard request log with source `MCP`.
+The Paylark MCP server, `paylark`, lives at `<api_base>/mcp` on the user's Paylark server. The user signs in with OAuth: the first connection opens a Paylark consent page where they pick test or live mode and whether to allow changes. Clients without OAuth can send a Paylark API key as `Authorization: Bearer sk_test_...` instead. Every tool call is one `/v1` API request in the granted mode, and it shows up in the dashboard request log with source `MCP`. If write tools are missing, the user granted read only; ask them to reconnect and allow changes rather than working around it.
 
-If the tools are missing, the server is not connected: ask the user to run `/plugin` and configure `paylark` (API base URL and key), or add it by hand:
-`claude mcp add --transport http paylark https://app.example.com/mcp --header "Authorization: Bearer sk_test_..."`.
+If the tools are missing, the server is not connected or not signed in. Ask the user to connect it for their client (see https://github.com/paylark/agent-plugin#install):
+
+- Claude Code: run `/mcp`, pick `paylark` and sign in (set the API base URL with `/plugin` if needed).
+- Codex: `codex mcp add paylark --url https://app.example.com/mcp`, then `codex mcp login paylark`.
+- Copilot CLI: `copilot mcp add --transport http paylark https://app.example.com/mcp`, then sign in when prompted.
+- Gemini CLI: `/mcp auth paylark` (set the URL with `gemini extensions config paylark`).
+- Any other client: a Streamable HTTP server at `<api_base>/mcp`, OAuth sign-in or header `Authorization: Bearer sk_test_...`.
 
 ## Start with `get_account`
 
