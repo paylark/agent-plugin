@@ -1,38 +1,89 @@
-// Checks that plugin manifests agree with each other and every skill has valid frontmatter.
+// Checks that every client manifest agrees on name, version and MCP server,
+// and that every skill has valid frontmatter. Run after changing a manifest.
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 
 const read = (p) => JSON.parse(readFileSync(p, "utf8"));
 const errors = [];
+const fail = (msg) => errors.push(msg);
 
 const claude = read(".claude-plugin/plugin.json");
+const { name, version } = claude;
+
+// Every manifest, with the name and version it declares.
 const market = read(".claude-plugin/marketplace.json");
-const cursor = read(".cursor-plugin/plugin.json");
-const entry = market.plugins.find((p) => p.name === claude.name);
+const entry = market.plugins?.find((p) => p.name === name);
+if (!entry) fail(`.claude-plugin/marketplace.json: no plugin named ${name}`);
+else if (entry.source !== "./") fail(`.claude-plugin/marketplace.json: source ${entry.source}, expected ./`);
 
-if (!entry) errors.push(`marketplace.json has no plugin named ${claude.name}`);
-if (cursor.name !== claude.name) errors.push(`cursor name ${cursor.name} != ${claude.name}`);
-for (const [file, v] of [
-  ["marketplace.json metadata", market.metadata?.version],
-  [".cursor-plugin/plugin.json", cursor.version],
+const codexMarket = read(".agents/plugins/marketplace.json");
+const codexEntry = codexMarket.plugins?.find((p) => p.name === name);
+if (!codexEntry) fail(`.agents/plugins/marketplace.json: no plugin named ${name}`);
+else if (codexEntry.source?.path !== "./") fail(`.agents/plugins/marketplace.json: source path ${codexEntry.source?.path}, expected ./`);
+
+const manifests = {
+  ".claude-plugin/marketplace.json": { name: market.name, version: market.metadata?.version },
+  ".agents/plugins/marketplace.json": { name: codexMarket.name },
+  ".cursor-plugin/plugin.json": read(".cursor-plugin/plugin.json"),
+  ".codex-plugin/plugin.json": read(".codex-plugin/plugin.json"),
+  "gemini-extension.json": read("gemini-extension.json"),
+  "plugin.json": read("plugin.json"),
+};
+for (const [file, m] of Object.entries(manifests)) {
+  if (m.name !== name) fail(`${file}: name ${m.name}, expected ${name}`);
+  if ("version" in m && m.version !== version) fail(`${file}: version ${m.version}, expected ${version}`);
+}
+
+// Paths a manifest points at must exist.
+const cursor = manifests[".cursor-plugin/plugin.json"];
+const codex = manifests[".codex-plugin/plugin.json"];
+for (const [file, p] of [
+  [".claude-plugin/plugin.json icon", claude.icon],
+  [".cursor-plugin/plugin.json skills", cursor.skills],
+  [".cursor-plugin/plugin.json mcpServers", cursor.mcpServers],
+  [".codex-plugin/plugin.json skills", codex.skills],
+  [".codex-plugin/plugin.json mcpServers", codex.mcpServers],
+  [".codex-plugin/plugin.json logo", codex.interface?.logo],
+  [".codex-plugin/plugin.json composerIcon", codex.interface?.composerIcon],
 ]) {
-  if (v !== claude.version) errors.push(`${file} version ${v} != plugin.json ${claude.version}`);
-}
-for (const p of [".mcp.json", ".cursor-plugin/mcp.json"]) {
-  if (!read(p).mcpServers?.[claude.name]) errors.push(`${p} has no ${claude.name} server`);
+  if (p !== undefined && !existsSync(p)) fail(`${file}: ${p} does not exist`);
 }
 
-for (const dir of readdirSync("skills")) {
+// Every MCP config must define the server at <base>/mcp. Claude Code takes the
+// base from userConfig; the other clients from the PAYLARK_API_BASE env var.
+const mcp = {
+  ".mcp.json": [read(".mcp.json").mcpServers?.[name], "url", "${user_config.api_base}/mcp"],
+  [cursor.mcpServers]: [read(cursor.mcpServers).mcpServers?.[name], "url", "${env:PAYLARK_API_BASE}/mcp"],
+  "gemini-extension.json": [manifests["gemini-extension.json"].mcpServers?.[name], "httpUrl", "${PAYLARK_API_BASE}/mcp"],
+};
+for (const [file, [server, key, want]] of Object.entries(mcp)) {
+  if (!server) { fail(`${file}: no ${name} MCP server`); continue; }
+  if (server[key] !== want) fail(`${file}: MCP ${key} ${server[key]}, expected ${want}`);
+}
+if (!claude.userConfig?.api_base) fail(".claude-plugin/plugin.json: userConfig.api_base missing");
+
+// Gemini prompts for every env var its MCP config uses.
+const gemini = manifests["gemini-extension.json"];
+const geminiVars = new Set((gemini.settings ?? []).map((s) => s.envVar));
+for (const v of JSON.stringify(gemini.mcpServers).matchAll(/\$\{(\w+)\}/g)) {
+  if (!geminiVars.has(v[1])) fail(`gemini-extension.json: ${v[1]} is used but not in settings`);
+}
+
+// Skills: one folder each, SKILL.md with a name matching the folder and a description.
+const skills = readdirSync("skills", { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name);
+for (const dir of skills) {
   const file = `skills/${dir}/SKILL.md`;
-  if (!existsSync(file)) { errors.push(`${file} missing`); continue; }
+  if (!existsSync(file)) { fail(`${file} missing`); continue; }
   const m = readFileSync(file, "utf8").match(/^---\n([\s\S]*?)\n---\n/);
-  if (!m) { errors.push(`${file}: no frontmatter`); continue; }
-  const name = m[1].match(/^name:\s*(.+)$/m)?.[1].trim();
-  if (name !== dir) errors.push(`${file}: name "${name}" != folder "${dir}"`);
-  if (!/^description:\s*\S/m.test(m[1])) errors.push(`${file}: missing description`);
+  if (!m) { fail(`${file}: no frontmatter`); continue; }
+  const skillName = m[1].match(/^name:\s*(.+)$/m)?.[1].trim();
+  if (skillName !== dir) fail(`${file}: name "${skillName}" != folder "${dir}"`);
+  const desc = m[1].match(/^description:\s*(.+)$/m)?.[1].trim() ?? "";
+  if (!desc) fail(`${file}: missing description`);
+  else if (desc.length > 1024) fail(`${file}: description is ${desc.length} chars, max 1024`);
 }
 
 if (errors.length) {
   console.error(errors.map((e) => `✗ ${e}`).join("\n"));
   process.exit(1);
 }
-console.log(`✓ ${claude.name} ${claude.version}: manifests and ${readdirSync("skills").length} skills OK`);
+console.log(`✓ ${name} ${version}: ${Object.keys(manifests).length + 1} manifests and ${skills.length} skills OK`);

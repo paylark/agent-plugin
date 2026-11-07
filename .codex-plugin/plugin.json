@@ -1,0 +1,32 @@
+{
+  "name": "paylark",
+  "version": "0.2.0",
+  "author": {
+    "name": "Paylark"
+  },
+  "homepage": "https://github.com/paylark/agent-plugin",
+  "repository": "https://github.com/paylark/agent-plugin",
+  "license": "MIT",
+  "description": "Paylark payments for Codex: skills for adding checkout, subscriptions, license keys and signed webhooks to your app, for use with the Paylark MCP server.",
+  "keywords": ["paylark", "payments", "checkout", "subscriptions", "license-keys", "webhooks", "codex", "mcp", "skills"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Paylark",
+    "shortDescription": "Checkout, subscriptions and license keys",
+    "longDescription": "Skills for adding Paylark payments to your app: hosted checkout and payment links, one-time products and subscriptions, license keys with device activation, signed webhooks and end-to-end testing in test mode. Pair it with the Paylark MCP server to read payments, customers, subscriptions and webhook deliveries, and to create products, checkout links and discounts from your agent.",
+    "developerName": "Paylark",
+    "category": "Developer Tools",
+    "capabilities": ["Read account data", "Create products and checkouts"],
+    "websiteURL": "https://github.com/paylark/agent-plugin",
+    "supportURL": "https://github.com/paylark/agent-plugin/issues",
+    "defaultPrompt": [
+      "Add a Paylark checkout for my Pro plan to this app.",
+      "Write a Paylark webhook handler that verifies the signature.",
+      "Gate this CLI behind a Paylark license key."
+    ],
+    "brandColor": "#2753E0",
+    "brandColorDark": "#5B7FFF",
+    "composerIcon": "./assets/icon.png",
+    "logo": "./assets/icon.png"
+  }
+}

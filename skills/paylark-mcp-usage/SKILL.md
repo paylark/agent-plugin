@@ -5,10 +5,15 @@ description: How and when to use the Paylark MCP server tools safely - reading p
 
 # Using the Paylark MCP server
 
-This plugin registers one remote MCP server, `paylark`, at `<api_base>/mcp`, authenticated with the API key the user entered when enabling the plugin. Every tool call is one `/v1` API request with that key, so it sees exactly the same data and limits as the key, and it shows up in the dashboard request log with source `MCP`.
+The Paylark MCP server, `paylark`, lives at `<api_base>/mcp` on the user's Paylark server and is authenticated with a Paylark API key. Every tool call is one `/v1` API request with that key, so it sees exactly the same data and limits as the key, and it shows up in the dashboard request log with source `MCP`.
 
-If the tools are missing, the server is not connected: ask the user to run `/plugin` and configure `paylark` (API base URL and key), or add it by hand:
-`claude mcp add --transport http paylark https://app.example.com/mcp --header "Authorization: Bearer sk_test_..."`.
+If the tools are missing, the server is not connected. Ask the user to connect it for their client (see the install table in https://github.com/paylark/agent-plugin#install):
+
+- Claude Code: run `/plugin` and configure `paylark` (API base URL and key).
+- Codex: `codex mcp add paylark --url https://app.example.com/mcp --bearer-token-env-var PAYLARK_API_KEY`
+- Copilot CLI: `copilot mcp add --transport http paylark https://app.example.com/mcp --header "Authorization: Bearer $PAYLARK_API_KEY"`
+- Gemini CLI: `gemini extensions config paylark`
+- Any other client: a Streamable HTTP server at `<api_base>/mcp` with header `Authorization: Bearer sk_test_...`.
 
 ## Start with `get_account`
 

@@ -1,12 +1,24 @@
 {
   "name": "paylark",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Paylark payments for Claude Code: the Paylark MCP server plus skills for adding checkout, subscriptions, license keys and signed webhooks to your app.",
   "author": {
     "name": "Paylark"
   },
+  "homepage": "https://github.com/paylark/agent-plugin",
+  "repository": "https://github.com/paylark/agent-plugin",
   "license": "MIT",
-  "keywords": ["paylark", "payments", "checkout", "subscriptions", "license-keys", "webhooks", "mcp", "skills"],
+  "keywords": [
+    "paylark",
+    "payments",
+    "checkout",
+    "subscriptions",
+    "license-keys",
+    "webhooks",
+    "mcp",
+    "skills"
+  ],
+  "icon": "assets/icon.png",
   "userConfig": {
     "api_key": {
       "type": "string",

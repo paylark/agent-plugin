@@ -1,0 +1,20 @@
+{
+  "name": "paylark",
+  "interface": {
+    "displayName": "Paylark"
+  },
+  "plugins": [
+    {
+      "name": "paylark",
+      "source": {
+        "source": "local",
+        "path": "./"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}

@@ -8,11 +8,24 @@ permissions:
   contents: read
 
 jobs:
-  check:
+  manifests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 22 }
-      - run: node scripts/check.mjs
-      - run: npx -y @anthropic-ai/claude-code plugin validate .
+        with:
+          node-version: 22
+      - name: Manifests agree on name, version and MCP server
+        run: node scripts/check.mjs
+      - name: Claude Code plugin and marketplace
+        run: npx -y @anthropic-ai/claude-code plugin validate .
+      - name: Gemini CLI extension
+        run: npx -y @google/gemini-cli@0.67.0 extensions validate .
+      - name: Skills are discoverable by npx skills
+        run: |
+          out=$(npx -y skills@1.7.6 add . --list 2>&1)
+          echo "$out"
+          for d in skills/*/; do
+            n=$(basename "$d")
+            grep -q "$n" <<<"$out" || { echo "::error::npx skills did not list $n"; exit 1; }
+          done
