@@ -58,8 +58,11 @@ const mcp = {
 for (const [file, [server, key, want]] of Object.entries(mcp)) {
   if (!server) { fail(`${file}: no ${name} MCP server`); continue; }
   if (server[key] !== want) fail(`${file}: MCP ${key} ${server[key]}, expected ${want}`);
+  // The bundled configs sign in with OAuth; an API key belongs only in a user's own config.
+  if (server.headers) fail(`${file}: MCP server sets headers; bundled configs must use OAuth sign-in`);
 }
 if (!claude.userConfig?.api_base) fail(".claude-plugin/plugin.json: userConfig.api_base missing");
+if (claude.userConfig?.api_key) fail(".claude-plugin/plugin.json: userConfig.api_key is not used with OAuth sign-in");
 
 // Gemini prompts for every env var its MCP config uses.
 const gemini = manifests["gemini-extension.json"];

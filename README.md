@@ -15,9 +15,9 @@ Paylark for AI coding agents: the Paylark MCP server plus five skills that teach
 | Cursor | ✅ | ✅ | [Plugin](#cursor) |
 | Windsurf, Cline, OpenCode, Zed, Amp, … | ✅ | config | [`npx skills` + MCP URL](#other-agents) |
 
-The MCP server runs on your Paylark server at `<api_base>/mcp` (for example `https://app.example.com/mcp`, or `http://localhost:8080/mcp` in local development) and takes a Paylark API key as a bearer token. Use a **test** key (`sk_test_...`) from Dashboard → Developers → API keys.
+The MCP server runs on your Paylark server at `<api_base>/mcp` (for example `https://app.example.com/mcp`, or `http://localhost:8080/mcp` in local development) and signs in with OAuth. There is no API key to paste: the first connection opens a Paylark consent page where you choose test or live mode and whether the agent may make changes. Connected agents are listed under Dashboard → Developers → API keys → Connected AI apps, where you can disconnect them.
 
-Codex and Copilot CLI cannot read the server address from a setting, so their plugins install the skills and you add the MCP server with one command.
+Codex and Copilot CLI cannot read the server address from a setting, so their plugins install the skills and you add the MCP server with one command. Clients without OAuth can use an [API key](#api-key-fallback) instead.
 
 ### Claude Code
 
@@ -26,28 +26,28 @@ claude plugin marketplace add paylark/agent-plugin
 claude plugin install paylark@paylark
 ```
 
-Or inside Claude Code: `/plugin marketplace add paylark/agent-plugin`, then `/plugin install paylark@paylark`. Claude Code asks for the **API base URL** and the **API key**; the key is stored in the system keychain, not in a settings file.
+Or inside Claude Code: `/plugin marketplace add paylark/agent-plugin`, then `/plugin install paylark@paylark`. Claude Code asks for the **API base URL**. Then run `/mcp`, pick `paylark` and sign in.
 
 ### Codex CLI
 
 ```sh
 codex plugin marketplace add paylark/agent-plugin
 codex plugin add paylark@paylark
-codex mcp add paylark --url https://app.example.com/mcp --bearer-token-env-var PAYLARK_API_KEY
+codex mcp add paylark --url https://app.example.com/mcp
+codex mcp login paylark
 ```
 
-Then export `PAYLARK_API_KEY=sk_test_...` before starting `codex`. You can also run `codex`, type `/plugins` and install **Paylark** from there.
+You can also run `codex`, type `/plugins` and install **Paylark** from there.
 
 ### GitHub Copilot CLI
 
 ```sh
 copilot plugin marketplace add paylark/agent-plugin
 copilot plugin install paylark@paylark
-copilot mcp add --transport http paylark https://app.example.com/mcp \
-  --header "Authorization: Bearer $PAYLARK_API_KEY"
+copilot mcp add --transport http paylark https://app.example.com/mcp
 ```
 
-`copilot mcp add` saves the header in `~/.copilot/mcp-config.json`, so use a test key.
+Copilot CLI opens the Paylark sign-in page the first time it uses the server.
 
 ### Gemini CLI
 
@@ -55,7 +55,7 @@ copilot mcp add --transport http paylark https://app.example.com/mcp \
 gemini extensions install https://github.com/paylark/agent-plugin
 ```
 
-Gemini CLI asks for the API base URL and the API key (kept in the system keychain). Change them later with `gemini extensions config paylark`.
+Gemini CLI asks for the API base URL (change it later with `gemini extensions config paylark`). Then run `/mcp auth paylark` inside Gemini CLI.
 
 ### Cursor
 
@@ -63,7 +63,7 @@ Gemini CLI asks for the API base URL and the API key (kept in the system keychai
 git clone https://github.com/paylark/agent-plugin.git ~/.cursor/plugins/local/paylark
 ```
 
-Set `PAYLARK_API_BASE` and `PAYLARK_API_KEY` in your environment and restart Cursor. The plugin's MCP config (`.cursor-plugin/mcp.json`) only references those variables.
+Set `PAYLARK_API_BASE` in your environment and restart Cursor; Cursor asks you to sign in the first time it connects. MCP only: add `{ "mcpServers": { "paylark": { "url": "https://app.example.com/mcp" } } }` to `.cursor/mcp.json`.
 
 ### Other agents
 
@@ -73,21 +73,28 @@ Any agent that reads `SKILL.md` folders can take the skills with [`skills`](http
 npx skills add paylark/agent-plugin          # add -a <agent> for one client, -g for global
 ```
 
-and any MCP client that speaks Streamable HTTP can use the server:
+and any MCP client that speaks Streamable HTTP and OAuth can use the server URL:
 
-```json
-{
-  "mcpServers": {
-    "paylark": {
-      "type": "http",
-      "url": "https://app.example.com/mcp",
-      "headers": { "Authorization": "Bearer sk_test_..." }
-    }
-  }
-}
+```sh
+npx add-mcp https://app.example.com/mcp
 ```
 
 Clients that read the [Agent Plugins](https://agent-plugins.org) manifest (`plugin.json`) can load a clone of this repository directly for the skills.
+
+### API key fallback
+
+Clients without OAuth can send a Paylark secret key from Dashboard → Developers → API keys as a bearer token. Use a **test** key (`sk_test_...`); a live key only gets read-only tools.
+
+```sh
+claude mcp add --transport http paylark https://app.example.com/mcp \
+  --header "Authorization: Bearer sk_test_..."
+codex mcp add paylark --url https://app.example.com/mcp --bearer-token-env-var PAYLARK_API_KEY
+```
+
+```json
+{ "mcpServers": { "paylark": { "type": "http", "url": "https://app.example.com/mcp",
+  "headers": { "Authorization": "Bearer sk_test_..." } } } }
+```
 
 ## What you get
 
@@ -107,8 +114,9 @@ Try: *"Add a Paylark checkout for my Pro plan to this app"* or *"Write a Paylark
 
 ## Security
 
-- Use **test keys**. Live keys only get read-only tools unless the server sets `MCP_ALLOW_LIVE_WRITES`.
-- Never commit a key. The Cursor and Gemini configs only reference environment variables.
+- OAuth sign-in starts in test mode and read only unless you allow changes on the consent page. Live connections only get read-only tools unless live writes are enabled for your account.
+- This repository never holds a key: the bundled MCP configs carry only the server URL, and `check.mjs` fails if one adds a header.
+- If you use the API key fallback, use a **test key** and never commit it.
 - The MCP server only accepts browser origins listed in `ALLOWED_ORIGINS`.
 
 ## Privacy
@@ -121,7 +129,7 @@ The plugin itself collects nothing. Its skills are local files, and the MCP serv
 |---|---|
 | `skills/` | The skills, shared by every client |
 | `.claude-plugin/` | Claude Code plugin and marketplace (also read by Copilot CLI) |
-| `.mcp.json` | Claude Code MCP server, using the plugin's `api_base` and `api_key` settings |
+| `.mcp.json` | Claude Code MCP server, using the plugin's `api_base` setting |
 | `.codex-plugin/`, `.agents/plugins/` | Codex plugin and marketplace |
 | `.cursor-plugin/` | Cursor plugin and MCP config |
 | `gemini-extension.json` | Gemini CLI extension |
@@ -147,4 +155,4 @@ MIT, see [LICENSE](LICENSE).
 
 ### 中文摘要
 
-Paylark 的 AI 編程助手外掛：接上 Paylark MCP 伺服器（`<api_base>/mcp`，用測試 API 金鑰），並附 5 個技能，教助手在你的專案裡串接結帳、訂閱、授權金鑰與 Webhook 簽章驗證。支援 Claude Code、Codex、Copilot CLI、Gemini CLI、Cursor，其他工具可用 `npx skills add paylark/agent-plugin` 加上 MCP 網址。
+Paylark 的 AI 編程助手外掛：接上 Paylark MCP 伺服器（`<api_base>/mcp`，OAuth 登入，不需貼 API 金鑰；不支援 OAuth 的用戶端可改用測試金鑰），並附 5 個技能，教助手在你的專案裡串接結帳、訂閱、授權金鑰與 Webhook 簽章驗證。支援 Claude Code、Codex、Copilot CLI、Gemini CLI、Cursor，其他工具可用 `npx skills add paylark/agent-plugin` 加上 MCP 網址。

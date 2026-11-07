@@ -21,12 +21,6 @@
   "privacyPolicyUrl": "https://github.com/paylark/agent-plugin#privacy",
   "icon": "assets/icon.png",
   "userConfig": {
-    "api_key": {
-      "type": "string",
-      "title": "Paylark API key",
-      "description": "Secret key from Dashboard → Developers → API keys. Use a test key (sk_test_...); live keys only get read-only tools.",
-      "sensitive": true
-    },
     "api_base": {
       "type": "string",
       "title": "Paylark API base URL",
