@@ -17,13 +17,13 @@ If the tools are missing, the server is not connected or not signed in. Ask the 
 
 ## Start with `get_account`
 
-It returns `mode` (`test` or `live`) and the balance. Say which mode you are in before doing anything else.
+It returns the `store` (an account can have several stores; a connection works in exactly one), `mode` (`test` or `live`) and the balance. Say which store and mode you are in before doing anything else. To work in another store, reconnect and pick it on the consent page, or use that store's API key.
 
 ## Tools
 
 | Tool | Kind | Use it for |
 |---|---|---|
-| `get_account` | read | Mode and balance per currency |
+| `get_account` | read | Store, mode and balance per currency |
 | `list_products` | read | Products with price, type and payment link |
 | `list_payments`, `get_payment` | read | Payments, fees, tax, refunds, failure reasons |
 | `list_customers` | read | Customers, exact match by email |
