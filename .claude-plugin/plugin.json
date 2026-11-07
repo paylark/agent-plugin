@@ -18,6 +18,7 @@
     "mcp",
     "skills"
   ],
+  "privacyPolicyUrl": "https://github.com/paylark/agent-plugin#privacy",
   "icon": "assets/icon.png",
   "userConfig": {
     "api_key": {
